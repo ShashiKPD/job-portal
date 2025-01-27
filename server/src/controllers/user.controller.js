@@ -125,10 +125,140 @@ const verifyOTP = asyncHandler(async (req, res) => {
   );
 });
 
-const loginUser = asyncHandler(async (req, res) => {
+const regenerateOtp = asyncHandler(async (req, res) => {
+  const { email, phone } = req.body;
 
+  if (!email && !phone) {
+    throw new ApiError(400, "Either email or phone is required to regenerate OTP.");
+  }
 
+  // Find the existing OTP entry for the user
+  const otpFilter = email ? { email } : { phone };
+  const existingOtp = await OTP.findOne(otpFilter);
+
+  if (!existingOtp) {
+    throw new ApiError(404, "No OTP record found for the provided email or phone.");
+  }
+
+  // Check rate limiting (1 OTP per minute)
+  const now = new Date();
+  const timeDifference = Math.floor((now - existingOtp.createdAt) / 1000); // in seconds
+  if (timeDifference < 60) {
+    throw new ApiError(429, "You can only request a new OTP after 1 minute.");
+  }
+
+  // Invalidate the old OTP
+  await OTP.deleteOne(otpFilter);
+
+  // Generate a new OTP
+  const otp = generateOTP(6);
+
+  // Save the new OTP to the database
+  const newOtp = await OTP.create({
+    email: email?.toLowerCase(),
+    phone,
+    otp,
+    expiresAt: new Date(Date.now() + OTP_TTL * 60 * 1000), // OTP_TTL minutes
+  });
+
+  // Send the OTP via SMS or Email
+  if (phone) {
+    await sendSMS(phone, `Your new OTP is: ${otp}`);
+  } else if (email) {
+    await sendEmail(email, "Your New OTP", `Your new OTP is: ${otp}`);
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, null, "OTP regenerated and sent successfully.")
+  );
 });
 
 
-export { registerUser, loginUser, verifyOTP };
+
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new ApiError(400, "Email and password are required.");
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+
+  if (!user) {
+    throw new ApiError(401, "Invalid email or password.");
+  }
+
+  const isPasswordCorrect = await user.isPasswordCorrect(password);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid email or password.");
+  }
+
+  // Check if the user is verified
+  if (!user.verified) {
+    throw new ApiError(403, "Account not verified. Please verify your email or phone.");
+  }
+
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  if (!accessToken || !refreshToken) {
+    throw new ApiError(500, "Failed to generate authentication tokens.");
+  }
+
+  // Save the refresh token in the database
+  user.refreshToken = refreshToken;
+  const savedUser = await user.save();
+  const loggedInUser = await User.findById(savedUser._id).select("-password -refreshToken -__v -createdAt -updatedAt");
+
+  const accessTokenOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: process.env.ACCESS_TOKEN_EXPIRY_SECONDS * 1000, // Shorter expiry
+  };
+  
+  const refreshTokenOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 1000, // Longer expiry
+  };
+  
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, accessTokenOptions)
+    .cookie("refreshToken", refreshToken, refreshTokenOptions)
+    .json(
+      new ApiResponse(
+        200,
+        { user: loggedInUser },
+        "User logged in successfully"
+      )
+    );
+  
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (refreshToken) {
+    // Invalidate the refresh token in the database
+    const user = await User.findOne({ refreshToken });
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+  }
+
+  // Clear both cookies in a concise manner
+  return res
+    .clearCookie("accessToken")
+    .clearCookie("refreshToken")
+    .status(200)
+    .json(new ApiResponse(200, null, "User logged out successfully"));
+});
+
+
+
+export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser };
