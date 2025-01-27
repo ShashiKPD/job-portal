@@ -14,23 +14,41 @@ const generateOTP = (len)=> {
   return randomstring.generate({length: len, charset: "numeric"})
 }
 
+const isEmailValid = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+}
+
+const isPhoneValid = (phone) => {
+  const phoneRegex = /^\+\d{1,4}\d{10}$/;
+  return phoneRegex.test(phone);
+}
+
 const registerUser = asyncHandler(async (req, res) => {
   let { username, email, phone, fullName, password } = req.body
   email = email.toLowerCase();
   username = username.toLowerCase();
 
+  
   if ([username, email, phone, fullName, password].some((field) =>
     field?.trim() === "" || !field)) {
-    throw new ApiError(400, "All fields are required.")
+      throw new ApiError(400, "All fields are required.")
   }
-  
+    
+  if (!isEmailValid(email)) {
+    throw new ApiError(400, "Invalid email format.");
+  }
+  if (!isPhoneValid(phone)) {
+    throw new ApiError(400, "Invalid phone format. Use E.164 format (e.g., '+1234567890').");
+  }
+
   const existingUser = await User.findOne({
     $or: [
       { username }, { email }, { phone }]
   })
 
   if (existingUser) {
-    throw new ApiError(400, "User with this username, email or password already exists.")
+    throw new ApiError(400, "User with this username, email or phone already exists.")
   }
 
   const emailOTP = generateOTP(6);
@@ -44,17 +62,6 @@ const registerUser = asyncHandler(async (req, res) => {
     { phone, otp: hashedPhoneOTP, type: "phone", expiresAt: Date.now() + OTP_TTL * 60 * 1000 },
   ]);
 
-  const user = await User.create({
-    username,
-    email,
-    phone,
-    fullName,
-    password,
-    emailVerified: false,
-    phoneVerified: false,
-    verified: false
-  })
-
   // Send OTPs via email and phone
   await sendEmail(
     email,
@@ -65,6 +72,17 @@ const registerUser = asyncHandler(async (req, res) => {
     phone,
     `Your phone OTP is ${phoneOTP}. It is valid for ${OTP_TTL} minutes.`
   );
+
+  const user = await User.create({
+    username,
+    email,
+    phone,
+    fullName,
+    password,
+    emailVerified: false,
+    phoneVerified: false,
+    verified: false
+  })
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken -verified -__v -createdAt -updatedAt"
@@ -84,6 +102,13 @@ const verifyOTP = asyncHandler(async (req, res) => {
 
   if ((!email && !phone) || !otp) {
     throw new ApiError(400, "Email or phone and OTP are required.");
+  }
+
+  if (email && !isEmailValid(email)) {
+    throw new ApiError(400, "Invalid email format.");
+  }
+  if (phone && !isPhoneValid(phone)) {
+    throw new ApiError(400, "Invalid phone format. Use E.164 format (e.g., '+1234567890').");
   }
 
   const otpEntry = await OTP.findOne({
@@ -133,6 +158,13 @@ const regenerateOtp = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Either email or phone is required to regenerate OTP.");
   }
 
+  if (email && !isEmailValid(email)) {
+    throw new ApiError(400, "Invalid email format.");
+  }
+  if (phone && !isPhoneValid(phone)) {
+    throw new ApiError(400, "Invalid phone format. Use E.164 format (e.g., '+1234567890').");
+  }
+
   // Find the existing OTP entry for the user
   const otpFilter = email ? { email } : { phone };
   const existingOtp = await OTP.findOne(otpFilter);
@@ -174,13 +206,15 @@ const regenerateOtp = asyncHandler(async (req, res) => {
   );
 });
 
-
-
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     throw new ApiError(400, "Email and password are required.");
+  }
+
+  if (!isEmailValid(email)) {
+    throw new ApiError(400, "Invalid email format.");
   }
 
   const user = await User.findOne({ email: email.toLowerCase() });

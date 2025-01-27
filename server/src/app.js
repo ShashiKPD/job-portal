@@ -1,8 +1,14 @@
 import express from "express"
 import cookieParser from "cookie-parser"
 import morgan from "morgan";
+import cors from "cors"
 
 const app = express();
+
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,
+  credentials: true
+}))
 
 // Use Morgan for logging
 const isProduction = process.env.NODE_ENV === "production";
@@ -37,6 +43,36 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+app.use((err, req, res, next) => {
+  let statusCode = err.status || 500;
+  let message = err.message || "An unexpected error occurred";
+
+  if (err.code === 21211) {
+    // Example: Twilio invalid phone number error
+    statusCode = err.status || 400;
+    message = `Invalid phone number: ${err.message}`;
+  }
+
+  // Log the error (for debugging purposes)
+  console.error("Error:", {
+    status: statusCode,
+    message: message,
+    stack: err.stack,
+    details: err.details,
+  });
+
+  // Respond with the error
+  res.status(statusCode).json({
+    statusCode,
+    success: false,
+    message,
+    moreInfo: err.moreInfo || undefined, // Provide additional info if available (e.g., Twilio error docs)
+  });
+  next();
+});
+
+
+
 import { ApiError } from "./utils/ApiError.js"
 app.use((err, req, res, next) => {
   console.log(err);
@@ -52,6 +88,7 @@ app.use((err, req, res, next) => {
   }
 
   return res.status(500).json({
+    statusCode: 500,
     success: false,
     message: "An unexpected error occurred",
   });
