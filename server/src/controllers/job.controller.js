@@ -70,7 +70,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
   .skip(skip) 
   .limit(parseInt(limit)) 
   .sort({ createdAt: -1 }) // Sort jobs by most recent
-  .select('-createdAt -updatedAt -__v')
+  .select('-candidates -createdAt -updatedAt -__v')
   .populate('createdBy', 'username email fullName -_id');
   
   const totalJobs = await Job.countDocuments();
@@ -109,7 +109,7 @@ const getJobsByCompany = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(parseInt(limit))
     .sort({ createdAt: -1 })
-    .select('-createdAt -updatedAt -__v') // Exclude unnecessary fields
+    .select('-candidates -createdAt -updatedAt -__v') // Exclude unnecessary fields
     .populate('createdBy', 'username email fullName -_id'); // Include user details in `createdBy`
 
   if (!jobs.length) {

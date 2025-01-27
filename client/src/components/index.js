@@ -1,5 +1,5 @@
 import InputField from './InputField';
 import InputLabel from './InputLabel';
+import Post from './Post';
 
-
-export { InputField, InputLabel };
+export { InputField, InputLabel, Post };

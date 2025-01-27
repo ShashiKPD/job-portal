@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../api/axios.js";
 import InputField from "../components/InputField";
 import InputLabel from "../components/InputLabel";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const LoginPage = () => {
   const {
@@ -13,7 +14,7 @@ const LoginPage = () => {
   } = useForm();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
-
+  const { setUser } = useAuth(); 
   const navigate = useNavigate();
 
   const onSubmit = async (data) => {
@@ -32,9 +33,11 @@ const LoginPage = () => {
           withCredentials: true, // Ensure cookies are included in the request
         }
       );
-
-      console.log("Login Successful:", response.data);
-
+      console.log("Login Successful:", response.data.data.user);
+      
+      setUser(response.data.data.user);
+      const { user } = useAuth()
+      console.log(user);
       // Redirect to the home page after login
       navigate("/");
     } catch (error) {
@@ -42,7 +45,9 @@ const LoginPage = () => {
         setServerError(error.response.data.message || "Invalid credentials.");
         console.log("Login Error:", error.response.data);
       } else {
-        setServerError("An unexpected error occurred. Please try again.");
+        setServerError("An unexpected error occurred. Please try again.: ");
+        console.log("Login Error:", error);
+        
       }
     } finally {
       setLoading(false);
