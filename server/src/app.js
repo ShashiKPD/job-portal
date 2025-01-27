@@ -9,10 +9,11 @@ app.use(cookieParser())
 
 import userRouter from "./routes/user.route.js"
 import jobRouter from "./routes/job.route.js"
+import healthcheckRouter from "./routes/healthcheck.route.js"
 
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/jobs", jobRouter)
-
+app.use("/api/v1/health-check", healthcheckRouter)
 
 import { ApiError } from "./utils/ApiError.js"
 app.use((err, req, res, next) => {
