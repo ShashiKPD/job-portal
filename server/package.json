@@ -18,6 +18,7 @@
     "momen": "^0.0.1-security",
     "moment": "^2.30.1",
     "mongoose": "^8.9.5",
+    "morgan": "^1.10.0",
     "nodemailer": "^6.10.0",
     "randomstring": "^1.3.1",
     "twilio": "^5.4.2"
