@@ -3,7 +3,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Job } from "../models/job.model.js";
 import { User } from "../models/user.model.js";
-
+import { sendEmail, jobAlertTemplate } from "../services/email.service.js"; 
+import moment from "moment";  
 
 const createJob = asyncHandler(async (req, res) => {
   const { jobTitle, jobDescription, experienceLevel, candidates, endDate } = req.body;
@@ -193,4 +194,87 @@ const addOrRemoveCandidate = asyncHandler(async (req, res) => {
 });
 
 
-export { createJob, getAllJobs, getJobsByCompany, addOrRemoveCandidate };
+// Define a rate limit for sending emails
+const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute in milliseconds
+const emailRateLimits = {};  // This can be replaced with a persistent storage like Redis
+
+const sendJobAlerts = asyncHandler(async (req, res) => {
+  const { jobId } = req.params;
+
+  if(!jobId) {
+    throw new ApiError(400, "Job ID is required");
+  }
+  const job = await Job.findById(jobId)
+    .populate("createdBy", "fullName username email")  // Populate company details (createdBy)
+    .select("-createdAt -updatedAt -__v");
+
+  if (!job) {
+    throw new ApiError(404, "Job not found");
+  }
+
+  if (job.createdBy._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to send job alerts for this job");
+  }
+
+  // Check rate limiting: If the user has sent an email within the last minute
+  const lastSentTimestamp = emailRateLimits[req.user._id];
+  if (lastSentTimestamp && moment().diff(moment(lastSentTimestamp), 'milliseconds') < RATE_LIMIT_DURATION) {
+    throw new ApiError(429, "You can only send job alerts once every minute.");
+  }
+
+  // Update the last sent timestamp to enforce rate limit
+  emailRateLimits[req.user._id] = moment().toISOString();
+
+  const candidates = job.candidates;
+  if (candidates.length === 0) {
+    throw new ApiError(400, "No candidates available for the job");
+  }
+
+  // Set all candidate emails to PENDING before attempting to send emails
+  job.candidates.forEach(candidate => candidate.status = "PENDING");
+
+  // Save the job to update the candidate statuses
+  await job.save();
+
+  // Create an array of promises to send emails
+  const promises = candidates.map(async (candidate) => {
+    try {
+      const {subject, htmlContent} = jobAlertTemplate(job, candidate);
+
+      // Send email to the candidate
+      await sendEmail(candidate.email, subject, htmlContent);
+      candidate.status = "SENT";
+    } catch (error) {
+      console.error(`Failed to send email to ${candidate.email}: ${error.message}`);
+      candidate.status = "FAILED";
+    }
+  });
+
+  // Wait for all emails to be sent
+  await Promise.all(promises);
+
+  // Save the job to update the candidate statuses
+  await job.save();
+
+  // Check if there are any failed emails
+  const failedEmails = job.candidates.filter(candidate => candidate.status === "FAILED");
+
+  // If there are any failed emails, respond with an appropriate message
+  if (failedEmails.length > 0) {
+    return res.status(500).json(
+      new ApiResponse(
+        500,
+        { failedEmails },
+        "Some job alerts failed to send"
+      )
+    );
+  }
+
+  // Return success response if all emails were sent
+  return res.status(200).json(new ApiResponse(200, null, "Job alerts sent successfully"));
+});
+
+
+
+
+export { createJob, getAllJobs, getJobsByCompany, addOrRemoveCandidate, sendJobAlerts };
