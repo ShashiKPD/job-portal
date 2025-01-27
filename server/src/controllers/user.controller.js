@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { OTP } from "../models/otp.model.js";
 import randomstring from "randomstring";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { OTP_TTL } from "../constants.js";
 import { sendEmail } from "../services/email.service.js";
 import { sendSMS } from "../services/sms.service.js";
@@ -259,6 +260,70 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User logged out successfully"));
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
 
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized request")
+  }
 
-export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser };
+  try {
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+    if (!decodedToken) {
+      throw new ApiError(401, "The refresh token is invalid")
+    }
+
+    const user = await User.findById(decodedToken?._id)
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token")
+    }
+
+    if (incomingRefreshToken != user?.refreshToken) {
+      throw new ApiError(401, "Refresh token is expired or used")
+    }
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    if (!accessToken || !refreshToken) {
+      throw new ApiError(500, "Failed to generate authentication tokens.");
+    }
+
+    // Save the refresh token in the database
+    user.refreshToken = refreshToken;
+    const savedUser = await user.save();
+    const loggedInUser = await User.findById(savedUser._id).select("-password -refreshToken -__v -createdAt -updatedAt");
+
+    const accessTokenOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: process.env.ACCESS_TOKEN_EXPIRY_SECONDS * 1000, // Shorter expiry
+    };
+    
+    const refreshTokenOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 1000, // Longer expiry
+    };
+    
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, accessTokenOptions)
+      .cookie("refreshToken", refreshToken, refreshTokenOptions)
+      .json(
+        new ApiResponse(
+          200,
+          { user: loggedInUser },
+          "access token refreshed successfully"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "something happened while generating the new access token")
+  }
+})
+
+export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser, refreshAccessToken };

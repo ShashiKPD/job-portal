@@ -8,8 +8,11 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(cookieParser())
 
 import userRouter from "./routes/user.route.js"
+import jobRouter from "./routes/job.route.js"
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/jobs", jobRouter)
+
 
 import { ApiError } from "./utils/ApiError.js"
 app.use((err, req, res, next) => {
