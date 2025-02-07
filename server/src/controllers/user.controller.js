@@ -257,7 +257,7 @@ const loginUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 1000, // Longer expiry
+    maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 10000, // Longer expiry
   };
   
   return res
@@ -360,4 +360,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 })
 
-export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser, refreshAccessToken };
+const getUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password -refreshToken -__v -createdAt -updatedAt")
+  if (!user) {
+    throw new ApiError(404, "User not found")
+  }
+  return res.status(200).json(new ApiResponse(200, {user: user}, "User details fetched successfully"))
+})
+
+export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser, refreshAccessToken, getUser };

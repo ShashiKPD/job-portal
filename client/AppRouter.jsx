@@ -8,7 +8,6 @@ function AppRouter() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Homepage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/register/verify-otp" element={<UserVerificationPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -17,6 +16,7 @@ function AppRouter() {
       {/* Protected routes */}
       <Route element={<Layout />}>
         {/* <Route path="/home" element={<Home />} /> */}
+      <Route path="/" element={<Homepage />} />
       
       </Route>
 

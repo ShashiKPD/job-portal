@@ -43,33 +43,33 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.use((err, req, res, next) => {
-  let statusCode = err.status || 500;
-  let message = err.message || "An unexpected error occurred";
+// app.use((err, req, res, next) => {
+//   let statusCode = err.status || 500;
+//   let message = err.message || "An unexpected error occurred";
 
-  if (err.code === 21211) {
-    // Example: Twilio invalid phone number error
-    statusCode = err.status || 400;
-    message = `Invalid phone number: ${err.message}`;
-  }
+//   if (err.code === 21211) {
+//     // Example: Twilio invalid phone number error
+//     statusCode = err.status || 400;
+//     message = `Invalid phone number: ${err.message}`;
+//   }
 
-  // Log the error (for debugging purposes)
-  console.error("Error:", {
-    status: statusCode,
-    message: message,
-    stack: err.stack,
-    details: err.details,
-  });
+//   // Log the error (for debugging purposes)
+//   console.error("Error:", {
+//     status: statusCode,
+//     message: message,
+//     stack: err.stack,
+//     details: err.details,
+//   });
 
-  // Respond with the error
-  res.status(statusCode).json({
-    statusCode,
-    success: false,
-    message,
-    moreInfo: err.moreInfo || undefined, // Provide additional info if available (e.g., Twilio error docs)
-  });
-  next();
-});
+//   // Respond with the error
+//   res.status(statusCode).json({
+//     statusCode,
+//     success: false,
+//     message,
+//     moreInfo: err.moreInfo || undefined, // Provide additional info if available (e.g., Twilio error docs)
+//   });
+//   next();
+// });
 
 
 
@@ -84,6 +84,17 @@ app.use((err, req, res, next) => {
       message: err.message,
       errors: err.errors,
       // stack: err.stack
+    });
+  }
+
+  if (err.code === 21211) {
+    // Example: Twilio invalid phone number error
+    let statusCode = err.status || 400;
+
+    return res.status(statusCode).json({
+      statusCode,
+      success: false,
+      message: `Invalid phone number: ${err.message}`,
     });
   }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios.js";
@@ -14,8 +14,14 @@ const LoginPage = () => {
   } = useForm();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
-  const { setUser } = useAuth(); 
+  const { user, setUser } = useAuth(); 
   const navigate = useNavigate();
+
+  useEffect(() => {
+  if (user) {
+    navigate("/"); // Redirect to the home page if the user is already logged in
+  }
+  }, [user]);
 
   const onSubmit = async (data) => {
     try {
@@ -36,8 +42,6 @@ const LoginPage = () => {
       console.log("Login Successful:", response.data.data.user);
       
       setUser(response.data.data.user);
-      const { user } = useAuth()
-      console.log(user);
       // Redirect to the home page after login
       navigate("/");
     } catch (error) {
