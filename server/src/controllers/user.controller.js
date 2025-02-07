@@ -333,14 +333,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const accessTokenOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "None",
       maxAge: process.env.ACCESS_TOKEN_EXPIRY_SECONDS * 1000, // Shorter expiry
     };
     
     const refreshTokenOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "None",
       maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 1000, // Longer expiry
     };
     
