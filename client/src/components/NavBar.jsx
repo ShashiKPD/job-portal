@@ -18,6 +18,7 @@ const NavBar = () => {
     try {
       await axios.post("/users/logout", {}, { withCredentials: true });
       setUser(null); // Clear AuthContext
+      enqueueSnackbar("Logout successful", { variant: "success" });
     } catch (error) {
       console.error("Logout failed:", error.response.data);
       enqueueSnackbar("Logout failed. Please try again.", { variant: "error" });
@@ -46,7 +47,7 @@ const NavBar = () => {
           ) : (
             <div className="flex items-center text-center">
               <Link className="nav-link p-5 hover:bg-slate-600" to="/profile">Profile</Link>
-              <button className="nav-link p-5 hover:bg-slate-600" onClick={handleLogout}>Logout</button>
+              <button className="nav-link p-5 hover:bg-slate-600 cursor-pointer" onClick={handleLogout}>Logout</button>
             </div>
           )}
         </div>
