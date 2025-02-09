@@ -68,9 +68,9 @@ const CompanyPage = () => {
           {isCurrentUserCompany && (
             <button
               onClick={() => navigate("/job-listing")}
-              className="mb-6 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="mb-6 py-2 px-4 bg-indigo-400 font-semibold text-white rounded-lg hover:bg-indigo-600 cursor-pointer border-indigo-200 border-4 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              Open Post
+              Create Job Post
             </button>
           )}
 

@@ -30,12 +30,12 @@ const NavBar = () => {
   return (
     <nav className="w-full bg-slate-800 text-white">
       <div className="flex justify-left mx-auto">
-        <div className="flex gap-5 items-center p-5">
+        <div className="flex gap-5 shrink-0 items-center sm:p-5 p-3">
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <RxHamburgerMenu className="text-2xl" />
+            <RxHamburgerMenu className="sm:text-2xl text-xl" />
           </button>
           <a className="navbar-brand" href="/">
-            <img src="/assets/kaamkaaj-logo-white-transparent.png" alt="Logo" className="w-32" />
+            <img src="/assets/kaamkaaj-logo-white-transparent.png" alt="Logo" className="sm:w-32 w-24" />
           </a>
         </div>
         <div className="navbar-collapse flex justify-end w-full" id="navbarNav">
@@ -50,7 +50,7 @@ const NavBar = () => {
             </div>
           ) : (
             <div className="flex items-center text-center">
-              <Link className="nav-link p-5 hover:bg-slate-600" to="/profile">Profile</Link>
+              <Link className="nav-link p-5 hover:bg-slate-600" to={"/company/" + user.username}>Profile</Link>
               <button className="nav-link p-5 hover:bg-slate-600 cursor-pointer" onClick={handleLogout}>Logout</button>
             </div>
           )}
