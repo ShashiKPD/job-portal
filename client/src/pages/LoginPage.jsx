@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "../api/axios.js";
 import InputField from "../components/InputField";
 import InputLabel from "../components/InputLabel";
@@ -99,6 +99,14 @@ const LoginPage = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+      <div>
+        <p className="mt-4">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

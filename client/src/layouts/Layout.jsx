@@ -1,10 +1,13 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { Outlet } from "react-router-dom";
+import NavBar from "../components/NavBar.jsx";
 
 const Layout = () => {
-  const { user } = useAuth(); // Get user from AuthContext
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
-};
+  return (
+    <>
+    <NavBar />
+    <Outlet /> 
+    </>
+)};
 
 export default Layout;

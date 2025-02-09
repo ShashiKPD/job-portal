@@ -19,22 +19,22 @@ export const AuthProvider = ({ children }) => {
     }
     setUser(userData);
   };
-  
-  // Check if the user is still authenticated on app load
-  useEffect(() => {
-    const verifyAuth = async () => {
-      try {
-        const response = await axios.get("/users/me", { withCredentials: true });
-        updateUser(response.data.data.user);
-        // console.log("User authenticated:", response.data.data.user);
-      } catch (error) {
-        updateUser(null); // Log out if the session is invalid
-        console.log("Session expired:", error);
-      }
-    };
 
-    verifyAuth();
-  }, []);
+  // Check if the user is still authenticated on app load
+  // useEffect(() => {
+  //   const verifyAuth = async () => {
+  //     try {
+  //       const response = await axios.get("/users/me", { withCredentials: true });
+  //       updateUser(response.data.data.user);
+  //       // console.log("User authenticated:", response.data.data.user);
+  //     } catch (error) {
+  //       updateUser(null); // Log out if the session is invalid
+  //       console.log("Session expired:", error.response.data);
+  //     }
+  //   };
+
+  //   verifyAuth();
+  // }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser: updateUser }}>

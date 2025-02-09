@@ -1,16 +1,26 @@
 // src/pages/CompanyRegisterPage.jsx
 import { useForm } from "react-hook-form";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "../api/axios.js";
 import InputField from "../components/InputField";
 import InputLabel from "../components/InputLabel";
+import { useAuth } from "../context/AuthContext.jsx";
+
 
 const CompanyRegisterPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState(""); // State to store server error messages
   const navigate = useNavigate();
+  const { user } = useAuth(); 
+
+
+  useEffect(() => {
+  if (user) {
+    navigate("/"); // Redirect to the home page if the user is already logged in
+  }
+  }, [user]);
 
   const onSubmit = async (data) => {
     try {
@@ -54,7 +64,7 @@ const CompanyRegisterPage = () => {
             validation={{ required: "Username is required" }}
             error={errors.username}
           />
-          {errors.username && <span className="text-red-500 text-xs">{errors.username.message}</span>}
+          {/* {errors.username && <span className="text-red-500 text-xs">{errors.username.message}</span>} */}
         </div>
 
         <div>
@@ -72,7 +82,7 @@ const CompanyRegisterPage = () => {
             }}
             error={errors.email}
           />
-          {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
+          {/* {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>} */}
         </div>
 
         <div>
@@ -89,7 +99,7 @@ const CompanyRegisterPage = () => {
             }}
             error={errors.phone}
           />
-          {errors.phone && <span className="text-red-500 text-xs">{errors.phone.message}</span>}
+          {/* {errors.phone && <span className="text-red-500 text-xs">{errors.phone.message}</span>} */}
         </div>
 
         <div>
@@ -100,7 +110,7 @@ const CompanyRegisterPage = () => {
             validation={{ required: "Full name is required" }}
             error={errors.fullName}
           />
-          {errors.fullName && <span className="text-red-500 text-xs">{errors.fullName.message}</span>}
+          {/* {errors.fullName && <span className="text-red-500 text-xs">{errors.fullName.message}</span>} */}
         </div>
 
         <div>
@@ -115,13 +125,21 @@ const CompanyRegisterPage = () => {
             }}
             error={errors.password}
           />
-          {errors.password && <span className="text-red-500 text-xs">{errors.password.message}</span>}
+          {/* {errors.password && <span className="text-red-500 text-xs">{errors.password.message}</span>} */}
         </div>
 
         <button type="submit" className="w-full py-2 px-4 bg-slate-600 text-white rounded-lg hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300" disabled={loading}>
           {loading ? "Submitting..." : "Register Company"}
         </button>
       </form>
+      <div>
+        <p className="mt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Login
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

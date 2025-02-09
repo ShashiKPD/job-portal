@@ -288,10 +288,19 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   // Clear both cookies in a concise manner
   return res
-    .clearCookie("accessToken")
-    .clearCookie("refreshToken")
-    .status(200)
-    .json(new ApiResponse(200, null, "User logged out successfully"));
+  .clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "None",
+  })
+  .clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "None",
+  })
+  .status(200)
+  .json(new ApiResponse(200, null, "User logged out successfully"));
+
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
