@@ -16,12 +16,14 @@ const NavBar = () => {
     // document.cookie = 'refreshToken=; Max-Age=0; path=/; domain=' + window.location.hostname;
 
     try {
-      await axios.post("/users/logout", {}, { withCredentials: true });
       setUser(null); // Clear AuthContext
-      enqueueSnackbar("Logout successful", { variant: "success" });
+      await axios.post("/users/logout", {}, { withCredentials: true });
+      enqueueSnackbar("You have been logged out", { variant: "success" });
     } catch (error) {
       console.error("Logout failed:", error.response.data);
-      enqueueSnackbar("Logout failed. Please try again.", { variant: "error" });
+      document.cookie = 'authToken=; Max-Age=0; path=/; domain=' + window.location.hostname;
+      document.cookie = 'refreshToken=; Max-Age=0; path=/; domain=' + window.location.hostname;
+      enqueueSnackbar("Error while logging out.", { variant: "error" });
     }
   };
 
@@ -29,10 +31,12 @@ const NavBar = () => {
     <nav className="w-full bg-slate-800 text-white">
       <div className="flex justify-left mx-auto">
         <div className="flex gap-5 items-center p-5">
-          <a className="navbar-brand" href="/">KaamKaaj</a>
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <RxHamburgerMenu className="text-2xl" />
           </button>
+          <a className="navbar-brand" href="/">
+            <img src="/assets/kaamkaaj-logo-white-transparent.png" alt="Logo" className="w-32" />
+          </a>
         </div>
         <div className="navbar-collapse flex justify-end w-full" id="navbarNav">
           {!user ? (

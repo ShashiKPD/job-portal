@@ -256,7 +256,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const refreshTokenOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "None",
     maxAge: process.env.REFRESH_TOKEN_EXPIRY_SECONDS * 10000, // Longer expiry
   };
   
