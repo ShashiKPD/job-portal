@@ -19,7 +19,7 @@ const NavBar = () => {
       await axios.post("/users/logout", {}, { withCredentials: true });
       setUser(null); // Clear AuthContext
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Logout failed:", error.response.data);
       enqueueSnackbar("Logout failed. Please try again.", { variant: "error" });
     }
   };
