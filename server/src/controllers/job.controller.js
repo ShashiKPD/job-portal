@@ -112,9 +112,9 @@ const getJobsByCompany = asyncHandler(async (req, res) => {
     .select('-candidates -createdAt -updatedAt -__v') // Exclude unnecessary fields
     .populate('createdBy', 'username email fullName -_id'); // Include user details in `createdBy`
 
-  if (!jobs.length) {
-    throw new ApiError(404, "No jobs found for this company");
-  }
+  // if (!jobs.length) {
+  //   throw new ApiError(404, "No jobs found for this company");
+  // }
 
   return res.status(200).json(
     new ApiResponse(

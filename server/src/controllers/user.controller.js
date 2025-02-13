@@ -382,4 +382,14 @@ const getUser = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, {user: user}, "User details fetched successfully"))
 })
 
-export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser, refreshAccessToken, getUser };
+const getCompanyData = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const company = await User.findOne({ username }).select("username email fullName -_id emailVerified phoneVerified verified");
+  if (!company) {
+    throw new ApiError(404, "Company not found");
+  }
+
+  return res.status(200).json(new ApiResponse(200, company, "Company details fetched successfully"));
+});
+
+export { registerUser, verifyOTP, regenerateOtp, loginUser, logoutUser, refreshAccessToken, getUser, getCompanyData };

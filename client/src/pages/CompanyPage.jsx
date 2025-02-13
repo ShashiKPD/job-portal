@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "../api/axios.js";
 import {Post} from "../components";
 import { useAuth } from "../context/AuthContext.jsx"; 
+import { use } from "react";
 
 const CompanyPage = () => {
   const { companyUsername } = useParams(); 
@@ -13,26 +14,40 @@ const CompanyPage = () => {
   const { user } = useAuth(); 
   const navigate = useNavigate();
 
+  const isCurrentUserCompany = user && user?.username === companyUsername;
+  
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
         setLoading(true);
-
-        // Fetch company job postings from the backend
-        const response = await axios.get(`/jobs/company/${companyUsername}?page=1&limit=10`);
-        
-        setCompanyData(response.data.data.jobs[0].createdBy); // Assuming company data is in createdBy
-        setJobs(response.data.data.jobs);
-        setPagination(response.data.data.pagination);
-
+        const response = await axios.get(`/users/company/${companyUsername}`);
+        setCompanyData(response.data.data);
       } catch (error) {
-        console.error("Error fetching company data", error);
+        console.error("Error fetching company data", error.response?.data);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCompanyData();
+  }, []);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/jobs/company/${companyUsername}?page=1&limit=10`);
+        setJobs(response.data.data.jobs);
+        setPagination(response.data.data.pagination);
+      } catch (error) {
+        console.log(error)
+        console.error("Error fetching company data", error.response?.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, [companyUsername]);
 
   const handlePageChange = async (page) => {
@@ -44,13 +59,11 @@ const CompanyPage = () => {
       setPagination(response.data.data.pagination);
       
     } catch (error) {
-      console.error("Error fetching jobs for this page", error);
+      console.error("Error fetching jobs for this page", error.response?.data);
     } finally {
       setLoading(false);
     }
   };
-
-  const isCurrentUserCompany = user && user?.username === companyUsername;
 
   return (
     <div className="container mx-auto p-6">
