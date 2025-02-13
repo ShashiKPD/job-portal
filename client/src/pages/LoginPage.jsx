@@ -5,6 +5,7 @@ import axios from "../api/axios.js";
 import InputField from "../components/InputField";
 import InputLabel from "../components/InputLabel";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useSnackbar } from "notistack";
 
 const LoginPage = () => {
   const {
@@ -16,12 +17,47 @@ const LoginPage = () => {
   const [serverError, setServerError] = useState("");
   const { user, setUser } = useAuth(); 
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
   if (user) {
     navigate("/"); // Redirect to the home page if the user is already logged in
   }
   }, [user]);
+
+  const sendEmailOTP = async () => {
+    try {
+      setLoading(true);
+      setServerError("");
+
+      // API call to send OTP to the user
+      await axios.post("/users/regenerate-otp",  {email: localStorage.getItem("email")}).then(()=>{
+        console.log("Email OTP Sent");
+        enqueueSnackbar("Email OTP sent. Please Verify", { variant: "success" });
+      })
+    }catch(error){
+      setServerError("Error sending email OTP: " + error.response.data);
+    }finally {
+      setLoading(false);
+    }
+  }
+
+  const sendPhoneOTP = async () => {
+    try {
+      setLoading(true);
+      setServerError("");
+
+      // API call to send OTP to the user
+      await axios.post("/users/regenerate-otp",  {email: localStorage.getItem("phone")}).then(()=>{
+        console.log("Phone OTP Sent");
+        enqueueSnackbar("Phone OTP sent. Please Verify", { variant: "success" });
+      })
+    }catch(error){
+      setServerError("Error sending phone OTP: " + error.response.data);
+    }finally {
+      setLoading(false);
+    }
+  }
 
   const onSubmit = async (data) => {
     try {
@@ -47,7 +83,17 @@ const LoginPage = () => {
     } catch (error) {
       if (error.response && error.response.data) {
         setServerError(error.response.data.message || "Invalid credentials.");
-        console.log("Login Error:", error.response.data);
+        // If Account not verified, send otp and redirect to OTP verification page
+        if(error.response.data.message === "Account not verified. Please verify your email and phone.") {
+          localStorage.setItem("email", error.response.data.data.email);
+          localStorage.setItem("phone", error.response.data.data.phone);
+          localStorage.setItem("emailVerified", error.response.data.data.emailVerified);
+          localStorage.setItem("phoneVerified", error.response.data.data.phoneVerified);
+          if(!(error.response.data.data.emailVerified)) sendEmailOTP();
+          if(!(error.response.data.data.emailVerified)) sendPhoneOTP();
+          enqueueSnackbar("Account not verified. Please verify your email and phone.", { variant: "error" });
+          navigate("/register/verify-otp");
+        }
       } else {
         setServerError("An unexpected error occurred. Please try again.: ");
         console.log("Login Error:", error);

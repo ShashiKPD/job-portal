@@ -165,32 +165,30 @@ const regenerateOtp = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid phone format. Use E.164 format (e.g., '+1234567890').");
   }
 
-  // Find the existing OTP entry for the user
+  // Find and delete all existing OTP entries for the user
   const otpFilter = email ? { email } : { phone };
-  const existingOtp = await OTP.findOne(otpFilter);
-
-  if (!existingOtp) {
-    throw new ApiError(404, "No OTP record found for the provided email or phone.");
-  }
+  await OTP.deleteMany(otpFilter);
 
   // Check rate limiting (1 OTP per minute)
   const now = new Date();
-  const timeDifference = Math.floor((now - existingOtp.createdAt) / 1000); // in seconds
-  if (timeDifference < 60) {
-    throw new ApiError(429, "You can only request a new OTP after 1 minute.");
+  const existingOtp = await OTP.findOne(otpFilter);
+  if (existingOtp) {
+    const timeDifference = Math.floor((now - existingOtp.createdAt) / 1000); // in seconds
+    if (timeDifference < 60) {
+      throw new ApiError(429, "You can only request a new OTP after 1 minute.");
+    }
   }
-
-  // Invalidate the old OTP
-  await OTP.deleteOne(otpFilter);
 
   // Generate a new OTP
   const otp = generateOTP(6);
+  const hashedOTP = await bcrypt.hash(otp, 10);
 
   // Save the new OTP to the database
   const newOtp = await OTP.create({
     email: email?.toLowerCase(),
     phone,
-    otp,
+    otp: hashedOTP,
+    type: email ? "email" : "phone", 
     expiresAt: new Date(Date.now() + OTP_TTL * 60 * 1000), // OTP_TTL minutes
   });
 
@@ -231,7 +229,14 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // Check if the user is verified
   if (!user.verified) {
-    throw new ApiError(403, "Account not verified. Please verify your email or phone.");
+    return res.status(403).json(
+      new ApiResponse(403, {
+      email: user.email,
+      phone: user.phone,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified
+      }, "Account not verified. Please verify your email and phone.")
+    );
   }
 
   const accessToken = user.generateAccessToken();

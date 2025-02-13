@@ -33,6 +33,8 @@ const CompanyRegisterPage = () => {
 
       localStorage.setItem("email", data.email);
       localStorage.setItem("phone", data.phone);
+      localStorage.setItem("emailVerified", false);
+      localStorage.setItem("phoneVerified", false);
 
       navigate("/register/verify-otp"); 
 
@@ -103,7 +105,7 @@ const CompanyRegisterPage = () => {
         </div>
 
         <div>
-          <InputLabel label="Full Name" name="fullName" />
+          <InputLabel label="Company Name" name="fullName" />
           <InputField
             name="fullName"
             register={register}
