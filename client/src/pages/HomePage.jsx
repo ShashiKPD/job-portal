@@ -15,7 +15,7 @@ const HomePage = () => {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(`/jobs/?page=${page}&limit=10`);
+      const response = await axios.get(`/jobs/?page=${page}&limit=3`);
       const { jobs, pagination } = response.data.data;
 
       setJobs(jobs);

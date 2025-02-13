@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "../api/axios.js";
 import {Post} from "../components";
 import { useAuth } from "../context/AuthContext.jsx"; 
-import { use } from "react";
 
 const CompanyPage = () => {
   const { companyUsername } = useParams(); 
@@ -74,13 +73,15 @@ const CompanyPage = () => {
           {/* Company Details */}
           <div className="border-b border-gray-300 pb-6 mb-6">
             <h2 className="text-3xl font-bold text-slate-800">{companyData?.fullName}</h2>
-            <p className="text-lg text-slate-600">{companyData?.email}</p>
+            <p className="text-lg text-slate-500 cursor-pointer hover:text-slate-900">
+              <a href={`mailto:${companyData?.email}`}> {companyData?.email}</a>
+            </p>
           </div>
 
           {/* Post Button (only visible to the company's owner) */}
           {isCurrentUserCompany && (
             <button
-              onClick={() => navigate("/job-listing")}
+              onClick={() => navigate("/create-job")}
               className="mb-6 py-2 px-4 bg-indigo-400 font-semibold text-white rounded-lg hover:bg-indigo-600 cursor-pointer border-indigo-200 border-4 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               Create Job Post

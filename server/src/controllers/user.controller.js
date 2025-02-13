@@ -384,7 +384,7 @@ const getUser = asyncHandler(async (req, res) => {
 
 const getCompanyData = asyncHandler(async (req, res) => {
   const { username } = req.params;
-  const company = await User.findOne({ username }).select("username email fullName -_id emailVerified phoneVerified verified");
+  const company = await User.findOne({ username }).select("username email fullName -_id");
   if (!company) {
     throw new ApiError(404, "Company not found");
   }

@@ -61,6 +61,30 @@ const createJob = asyncHandler(async (req, res) => {
   return res.status(201).json(new ApiResponse(201, createdJob, "Job created successfully"));
 });
 
+const getJob = asyncHandler(async (req, res) => {
+  const { jobId } = req.params;
+  
+  if (!jobId) {
+    throw new ApiError(400, "Job ID is required");
+  }
+
+  let job = await Job.findById(jobId)
+    .populate('createdBy', 'username email fullName -_id')
+    .select('-updatedAt -__v');
+
+  if (!job) {
+    throw new ApiError(404, "Job not found");
+  }
+
+  // Transform the candidates field to exclude status and _id
+  job = job.toObject();
+  job.candidates = job.candidates.map(candidate => {
+    return candidate.email;
+  });
+  
+  return res.status(200).json(new ApiResponse(200, job, "Job retrieved successfully"));
+});
+
 const getAllJobs = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query; // Default to page 1, 10 jobs per page
   
@@ -277,4 +301,4 @@ const sendJobAlerts = asyncHandler(async (req, res) => {
 
 
 
-export { createJob, getAllJobs, getJobsByCompany, addOrRemoveCandidate, sendJobAlerts };
+export { createJob, getAllJobs, getJobsByCompany, addOrRemoveCandidate, sendJobAlerts, getJob };

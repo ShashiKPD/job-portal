@@ -29,16 +29,16 @@ const Post = ({ job }) => {
       <div className="flex justify-between ">
         <div>
           <h3 className="text-xl font-semibold text-slate-700">{jobTitle}</h3>
-          <p className="text-sm text-slate-500 mb-3">{jobDescription}</p>
+          <p className="text-sm text-slate-500 mb-3 whitespace-pre-line line-clamp-4">{jobDescription}</p>
         </div>
-        {onOwnerProfilePage && (
+        
         <Link
-          to={`/company/${username}/job/${job._id}`}
+          to={`/jobs/${job._id}`}
           className="shrink-0 max-sm:text-xs text-white bg-indigo-400 rounded-lg pl-2 pr-2 flex items-center hover:bg-indigo-500 font-semibold max-h-10"
         >
           View Job
         </Link>
-      )}
+     
       </div>
       <div className="flex items-center mb-3">
         <span

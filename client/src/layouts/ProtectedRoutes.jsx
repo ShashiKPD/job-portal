@@ -6,7 +6,7 @@ import Layout from "./Layout.jsx";
 const ProtectedRoutes = () => {
   const { user } = useAuth(); // Get user from AuthContext
   // const user = { name: "John Doe", email: "" }; // Mock user data
-  console.log("user: ", user);
+  // console.log("user: ", user);
   
   return user ? 
   <>
